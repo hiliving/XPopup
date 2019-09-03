@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,14 +25,18 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+
 import com.lxj.xpopup.core.AttachPopupView;
 import com.lxj.xpopup.core.BasePopupView;
 import com.lxj.xpopup.core.BottomPopupView;
 import com.lxj.xpopup.core.CenterPopupView;
+import com.lxj.xpopup.core.DrawerPopupView;
+import com.lxj.xpopup.core.PositionPopupView;
 import com.lxj.xpopup.enums.ImageType;
 import com.lxj.xpopup.impl.FullScreenPopupView;
 import com.lxj.xpopup.impl.PartShadowPopupView;
 import com.lxj.xpopup.interfaces.XPopupImageLoader;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -83,15 +88,15 @@ public class XPopupUtils {
         }
     }
 
-
-    public static void setWidthHeight(final View target, final int width, final int height) {
+    public static void setWidthHeight(View target, int width, int height) {
+        if (width <= 0 && height <= 0) return;
         ViewGroup.LayoutParams params = target.getLayoutParams();
-        params.width = width;
-        params.height = height;
+        if (width > 0) params.width = width;
+        if (height > 0) params.height = height;
         target.setLayoutParams(params);
     }
 
-    public static void applyPopupSize(final ViewGroup content, final int maxWidth, final int maxHeight) {
+    public static void applyPopupSize(ViewGroup content, int maxWidth, int maxHeight) {
         applyPopupSize(content, maxWidth, maxHeight, null);
     }
 
@@ -106,7 +111,7 @@ public class XPopupUtils {
                 int w = content.getMeasuredWidth();
                 // response impl view wrap_content params.
                 if (implParams.width == FrameLayout.LayoutParams.WRAP_CONTENT) {
-                    w = Math.min(w, implView.getMeasuredWidth());
+//                    w = Math.min(w, implView.getMeasuredWidth());
                 }
                 if (maxWidth != 0) {
                     params.width = Math.min(w, maxWidth);
@@ -191,6 +196,7 @@ public class XPopupUtils {
 
     public static void moveUpToKeyboard(int keyboardHeight, BasePopupView pv) {
         if (!pv.popupInfo.isMoveUpToKeyboard) return;
+        if (pv instanceof PositionPopupView) return;
         //判断是否盖住输入框
         ArrayList<EditText> allEts = new ArrayList<>();
         findAllEditText(allEts, pv);
@@ -220,7 +226,7 @@ public class XPopupUtils {
         }
 
         //暂时忽略PartShadow弹窗和AttachPopupView
-        if (pv instanceof PartShadowPopupView || pv instanceof AttachPopupView) return;
+        if (!(pv instanceof PartShadowPopupView) && pv instanceof AttachPopupView) return;
         //执行上移
         if (pv instanceof FullScreenPopupView ||
                 (popupWidth == XPopupUtils.getWindowWidth(pv.getContext()) &&
@@ -231,31 +237,71 @@ public class XPopupUtils {
                 return;
             }
         }
-        if (pv instanceof CenterPopupView) {
+        if (pv instanceof FullScreenPopupView) {
+            int overflowHeight = (focusBottom + keyboardHeight) - windowHeight;
+            if (focusEt != null && overflowHeight > 0) {
+                dy = overflowHeight;
+            }
+        } else if (pv instanceof CenterPopupView) {
             int targetY = keyboardHeight - (windowHeight - popupHeight + getStatusBarHeight()) / 2; //上移到下边贴着输入法的高度
 
             if (focusEt != null && focusEtTop - targetY < 0) {
                 targetY += focusEtTop - targetY - getStatusBarHeight();//限制不能被状态栏遮住
             }
-            dy = targetY;
+            dy = Math.max(0, targetY);
         } else if (pv instanceof BottomPopupView) {
             dy = keyboardHeight;
             if (focusEt != null && focusEtTop - dy < 0) {
                 dy += focusEtTop - dy - getStatusBarHeight();//限制不能被状态栏遮住
             }
+        } else if (isBottomPartShadow(pv) || pv instanceof DrawerPopupView) {
+            int overflowHeight = (focusBottom + keyboardHeight) - windowHeight;
+            if (focusEt != null && overflowHeight > 0) {
+                dy = overflowHeight;
+            }
+        }else if(isTopPartShadow(pv)){
+            int overflowHeight = (focusBottom + keyboardHeight) - windowHeight;
+            if (focusEt != null && overflowHeight > 0) {
+                dy = overflowHeight;
+            }
+            if(dy!=0){
+                pv.getPopupImplView().animate().translationY(-dy)
+                        .setDuration(200)
+                        .setInterpolator(new OvershootInterpolator(0))
+                        .start();
+            }
+            return;
         }
+        //dy=0说明没有触发移动，有些弹窗有translationY，不能影响它们
+        if (dy == 0 && pv.getPopupContentView().getTranslationY() != 0) return;
         pv.getPopupContentView().animate().translationY(-dy)
-                .setDuration(250)
+                .setDuration(200)
                 .setInterpolator(new OvershootInterpolator(0))
                 .start();
     }
 
+    private static boolean isBottomPartShadow(BasePopupView pv) {
+        return pv instanceof PartShadowPopupView && ((PartShadowPopupView) pv).isShowUp;
+    }
+
+    private static boolean isTopPartShadow(BasePopupView pv) {
+        return pv instanceof PartShadowPopupView && !((PartShadowPopupView) pv).isShowUp;
+    }
+
     public static void moveDown(BasePopupView pv) {
         //暂时忽略PartShadow弹窗和AttachPopupView
-        if (pv instanceof PartShadowPopupView || pv instanceof AttachPopupView) return;
-        pv.getPopupContentView().animate().translationY(0)
-                .setInterpolator(new OvershootInterpolator(0))
-                .setDuration(300).start();
+        if (pv instanceof PositionPopupView) return;
+        if (!(pv instanceof PartShadowPopupView) && pv instanceof AttachPopupView) return;
+        if (pv instanceof PartShadowPopupView && !isBottomPartShadow(pv)) {
+            pv.getPopupImplView().animate().translationY(0)
+                    .setInterpolator(new OvershootInterpolator(0))
+                    .setDuration(200).start();
+        }else {
+            pv.getPopupContentView().animate().translationY(0)
+                    .setInterpolator(new OvershootInterpolator(0))
+                    .setDuration(200).start();
+
+        }
     }
 
 
@@ -300,14 +346,26 @@ public class XPopupUtils {
         }
     }
 
+    private static Context mContext;
+
     public static void saveBmpToAlbum(final Context context, final XPopupImageLoader imageLoader, final Object uri) {
         final Handler mainHandler = new Handler(Looper.getMainLooper());
         final ExecutorService executor = Executors.newSingleThreadExecutor();
+        mContext = context;
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                File source = imageLoader.getImageFile(context, uri);
-                if (source == null) return;
+                File source = imageLoader.getImageFile(mContext, uri);
+                if (source == null) {
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(mContext, "图片不存在！", Toast.LENGTH_SHORT).show();
+                            mContext = null;
+                        }
+                    });
+                    return;
+                }
                 //1. create path
                 String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + Environment.DIRECTORY_PICTURES;
                 File dirFile = new File(dirPath);
@@ -321,14 +379,15 @@ public class XPopupUtils {
                     //2. save
                     writeFileFromIS(target, new FileInputStream(source));
                     //3. notify
-                    MediaScannerConnection.scanFile(context, new String[]{target.getAbsolutePath()},
+                    MediaScannerConnection.scanFile(mContext, new String[]{target.getAbsolutePath()},
                             new String[]{"image/" + ext}, new MediaScannerConnection.OnScanCompletedListener() {
                                 @Override
                                 public void onScanCompleted(final String path, Uri uri) {
                                     mainHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(context, "保存成功！保存在：" + path, Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(mContext, "已保存到相册！", Toast.LENGTH_SHORT).show();
+                                            mContext = null;
                                         }
                                     });
                                 }
@@ -338,7 +397,8 @@ public class XPopupUtils {
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(context, "没有保存权限，保存功能无法使用！", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mContext, "没有保存权限，保存功能无法使用！", Toast.LENGTH_SHORT).show();
+                            mContext = null;
                         }
                     });
                 }

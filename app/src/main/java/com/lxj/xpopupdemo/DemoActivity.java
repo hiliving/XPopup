@@ -3,18 +3,19 @@ package com.lxj.xpopupdemo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.core.BasePopupView;
 import com.lxj.xpopup.enums.PopupAnimation;
-import com.lxj.xpopup.enums.PopupPosition;
 import com.lxj.xpopup.interfaces.OnConfirmListener;
 import com.lxj.xpopup.interfaces.OnSelectListener;
+import com.lxj.xpopupdemo.fragment.ImageViewerDemo;
 
 /**
  * Description:
@@ -22,11 +23,13 @@ import com.lxj.xpopup.interfaces.OnSelectListener;
  */
 public class DemoActivity extends AppCompatActivity {
     EditText editText;
+    RecyclerView recyclerView;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_demo);
         editText = findViewById(R.id.et);
+        recyclerView = findViewById(R.id.recyclerView);
         findViewById(R.id.text).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -37,13 +40,13 @@ public class DemoActivity extends AppCompatActivity {
 
         final BasePopupView popupView = new XPopup.Builder(this)
                 .atView(editText)
-                .isRequestFocus(false)
+                .isRequestFocus(false) //要设置这个，否则Activity内的输入框会无法获取焦点
                 .hasShadowBg(false)
                 .popupAnimation(PopupAnimation.ScaleAlphaFromCenter)
                 .asAttachList(new String[]{"联想到的内容 - 1", "联想到的内容 - 2", "联想到的内容 - 333"}, null, new OnSelectListener() {
                     @Override
                     public void onSelect(int position, String text) {
-                        Toast.makeText(DemoActivity.this, text, Toast.LENGTH_LONG).show();
+                        Toast.makeText(XPopupApp.context, text, Toast.LENGTH_LONG).show();
                     }
                 });
         editText.addTextChangedListener(new TextWatcher() {
@@ -62,6 +65,13 @@ public class DemoActivity extends AppCompatActivity {
                 }
             }
         });
+
+        initData();
+    }
+
+    private void initData() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(new ImageViewerDemo.ImageAdapter());
     }
 
     public void showMultiPopup(){
@@ -72,8 +82,6 @@ public class DemoActivity extends AppCompatActivity {
                 .asBottomList("haha", new String[]{"点我显示弹窗", "点我显示弹窗", "点我显示弹窗", "点我显示弹窗"}, new OnSelectListener() {
                     @Override
                     public void onSelect(int position, String text) {
-                        Toast.makeText(DemoActivity.this, text, Toast.LENGTH_LONG).show();
-
                         new XPopup.Builder(DemoActivity.this).asConfirm("测试", "aaaa", new OnConfirmListener() {
                             @Override
                             public void onConfirm() {
@@ -82,5 +90,7 @@ public class DemoActivity extends AppCompatActivity {
                         }).show();
                     }
                 }).show();
+
+
     }
 }

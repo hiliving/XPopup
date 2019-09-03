@@ -9,21 +9,58 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.lxj.statelayout.StateLayout;
+import com.lxj.xpopupdemo.XPopupApp;
+
 /**
  * Description:
  * Create by dance, at 2018/12/9
  */
 public abstract class BaseFragment extends Fragment {
+    View view;
+    boolean isInit = false;
+    StateLayout stateLayout;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(getLayoutId(), container,false);
+        if (view == null) {
+            view = inflater.inflate(getLayoutId(), container, false);
+            stateLayout = new StateLayout(getContext()).wrap(view).showLoading();
+        }
+        return stateLayout;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        safeInit();
+    }
+
+    private void safeInit() {
+        if (getUserVisibleHint() && view!=null) {
+            if (!isInit) {
+                isInit = true;
+                init(view);
+                stateLayout.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stateLayout.showContent();
+                    }
+                },300);
+            }
+        }
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        safeInit();
     }
 
     protected abstract int getLayoutId();
     public abstract void init(View view);
 
-    public void toast(String msg){
-        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+    public void toast(String msg) {
+        Toast.makeText(XPopupApp.context, msg, Toast.LENGTH_SHORT).show();
     }
 }

@@ -2,12 +2,9 @@ package com.lxj.xpopup.core;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.support.v4.widget.NestedScrollView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import com.lxj.xpopup.R;
 import com.lxj.xpopup.animator.PopupAnimator;
 import com.lxj.xpopup.enums.PopupStatus;
@@ -23,9 +20,6 @@ public class BottomPopupView extends BasePopupView {
     protected SmartDragLayout bottomPopupContainer;
     public BottomPopupView(@NonNull Context context) {
         super(context);
-        bottomPopupContainer = findViewById(R.id.bottomPopupContainer);
-        View contentView = LayoutInflater.from(getContext()).inflate(getImplLayoutId(), bottomPopupContainer, false);
-        bottomPopupContainer.addView(contentView);
     }
 
     @Override
@@ -36,9 +30,16 @@ public class BottomPopupView extends BasePopupView {
     @Override
     protected void initPopupContent() {
         super.initPopupContent();
+        bottomPopupContainer = findViewById(R.id.bottomPopupContainer);
+        View contentView = LayoutInflater.from(getContext()).inflate(getImplLayoutId(), bottomPopupContainer, false);
+        bottomPopupContainer.addView(contentView);
         bottomPopupContainer.enableDrag(popupInfo.enableDrag);
         bottomPopupContainer.dismissOnTouchOutside(popupInfo.isDismissOnTouchOutside);
         bottomPopupContainer.hasShadowBg(popupInfo.hasShadowBg);
+
+        getPopupImplView().setTranslationX(popupInfo.offsetX);
+        getPopupImplView().setTranslationY(popupInfo.offsetY);
+
         XPopupUtils.applyPopupSize((ViewGroup) getPopupContentView(), getMaxWidth(), getMaxHeight());
 
         bottomPopupContainer.setOnCloseListener(new SmartDragLayout.OnCloseListener() {
@@ -60,11 +61,6 @@ public class BottomPopupView extends BasePopupView {
         });
     }
 
-    @Override
-    protected void applyOffset() {
-        getPopupImplView().setTranslationX(popupInfo.offsetX);
-        getPopupImplView().setTranslationY(popupInfo.offsetY);
-    }
 
     @Override
     protected void doAfterShow() {
@@ -114,6 +110,8 @@ public class BottomPopupView extends BasePopupView {
         if (popupInfo.enableDrag) {
             if (popupStatus == PopupStatus.Dismissing) return;
             popupStatus = PopupStatus.Dismissing;
+            if (popupInfo.autoOpenSoftInput) KeyboardUtils.hideSoftInput(this);
+            clearFocus();
             // 关闭Drawer，由于Drawer注册了关闭监听，会自动调用dismiss
             bottomPopupContainer.close();
         } else {
@@ -133,6 +131,11 @@ public class BottomPopupView extends BasePopupView {
     protected int getMaxWidth() {
         return popupInfo.maxWidth == 0 ? XPopupUtils.getWindowWidth(getContext())
                 : popupInfo.maxWidth;
+    }
+
+    @Override
+    protected View getTargetSizeView() {
+        return getPopupImplView();
     }
 
 }

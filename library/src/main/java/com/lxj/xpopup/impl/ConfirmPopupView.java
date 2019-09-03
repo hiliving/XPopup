@@ -16,18 +16,32 @@ import com.lxj.xpopup.interfaces.OnConfirmListener;
  * Description: 确定和取消的对话框
  * Create by dance, at 2018/12/16
  */
-public class ConfirmPopupView extends CenterPopupView implements View.OnClickListener{
+public class ConfirmPopupView extends CenterPopupView implements View.OnClickListener {
+    OnCancelListener cancelListener;
+    OnConfirmListener confirmListener;
+    TextView tv_title, tv_content, tv_cancel, tv_confirm;
+    String title, content, hint, cancelText, confirmText;
+    boolean isHideCancel = false;
 
     public ConfirmPopupView(@NonNull Context context) {
         super(context);
     }
 
-    @Override
-    protected int getImplLayoutId() {
-        return R.layout._xpopup_center_impl_confirm;
+    /**
+     * 绑定已有布局
+     * @param layoutId 要求布局中必须包含的TextView以及id有：tv_title，tv_content，tv_cancel，tv_confirm
+     * @return
+     */
+    public ConfirmPopupView bindLayout(int layoutId){
+        bindLayoutId = layoutId;
+        return this;
     }
 
-    TextView tv_title, tv_content, tv_cancel, tv_confirm;
+    @Override
+    protected int getImplLayoutId() {
+        return bindLayoutId != 0 ? bindLayoutId : R.layout._xpopup_center_impl_confirm;
+    }
+
     @Override
     protected void initPopupContent() {
         super.initPopupContent();
@@ -36,57 +50,72 @@ public class ConfirmPopupView extends CenterPopupView implements View.OnClickLis
         tv_cancel = findViewById(R.id.tv_cancel);
         tv_confirm = findViewById(R.id.tv_confirm);
 
-        applyPrimaryColor();
+        if(bindLayoutId==0) applyPrimaryColor();
 
         tv_cancel.setOnClickListener(this);
         tv_confirm.setOnClickListener(this);
 
-        if(!TextUtils.isEmpty(title)){
+        if (!TextUtils.isEmpty(title)) {
             tv_title.setText(title);
-        }
-        if(!TextUtils.isEmpty(content)){
-            tv_content.setText(content);
+        } else {
+            tv_title.setVisibility(GONE);
         }
 
-        if(isHideCancel)tv_cancel.setVisibility(GONE);
+        if (!TextUtils.isEmpty(content)) {
+            tv_content.setText(content);
+        }else {
+            tv_content.setVisibility(GONE);
+        }
+        if (!TextUtils.isEmpty(cancelText)) {
+            tv_cancel.setText(cancelText);
+        }
+        if (!TextUtils.isEmpty(confirmText)) {
+            tv_confirm.setText(confirmText);
+        }
+        if (isHideCancel) tv_cancel.setVisibility(GONE);
     }
 
-    protected void applyPrimaryColor(){
+    protected void applyPrimaryColor() {
         tv_cancel.setTextColor(XPopup.getPrimaryColor());
         tv_confirm.setTextColor(XPopup.getPrimaryColor());
     }
 
-    OnCancelListener cancelListener;
-    OnConfirmListener confirmListener;
-    public ConfirmPopupView setListener( OnConfirmListener confirmListener,OnCancelListener cancelListener){
+    public ConfirmPopupView setListener(OnConfirmListener confirmListener, OnCancelListener cancelListener) {
         this.cancelListener = cancelListener;
         this.confirmListener = confirmListener;
         return this;
     }
-    String title;
-    String content;
-    String hint;
-    public ConfirmPopupView setTitleContent(String title, String content, String hint){
+
+    public ConfirmPopupView setTitleContent(String title, String content, String hint) {
         this.title = title;
         this.content = content;
         this.hint = hint;
         return this;
     }
 
-    boolean isHideCancel = false;
-    public ConfirmPopupView hideCancelBtn(){
+    public ConfirmPopupView setCancelText(String cancelText) {
+        this.cancelText = cancelText;
+        return this;
+    }
+
+    public ConfirmPopupView setConfirmText(String confirmText) {
+        this.confirmText = confirmText;
+        return this;
+    }
+
+    public ConfirmPopupView hideCancelBtn() {
         isHideCancel = true;
         return this;
     }
 
     @Override
     public void onClick(View v) {
-        if(v==tv_cancel){
-            if(cancelListener!=null)cancelListener.onCancel();
+        if (v == tv_cancel) {
+            if (cancelListener != null) cancelListener.onCancel();
             dismiss();
-        }else if(v==tv_confirm){
-            if(confirmListener!=null)confirmListener.onConfirm();
-            if(popupInfo.autoDismiss)dismiss();
+        } else if (v == tv_confirm) {
+            if (confirmListener != null) confirmListener.onConfirm();
+            if (popupInfo.autoDismiss) dismiss();
         }
     }
 }

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,6 +16,12 @@
             android:text="显示Confirm弹窗"
             android:textAllCaps="false" />
 
+        <Button
+            android:id="@+id/btnBindLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="使用内置弹窗绑定项目已有布局"
+            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/btnShowInputConfirm"
@@ -84,7 +89,12 @@
             android:layout_height="wrap_content"
             android:text="显示自定义Bottom弹窗（自带拖拽交互）"
             android:textAllCaps="false" />
-
+        <Button
+            android:id="@+id/btnPagerBottomPopup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="显示复杂交互的Bottom弹窗（各种手势滑动嵌套）"
+            android:textAllCaps="false" />
         <TextView
             android:id="@+id/tv1"
             android:layout_width="100dp"
@@ -125,6 +135,7 @@
             android:textAllCaps="false"
             android:textColor="#fff"
             android:textSize="22sp" />
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -186,11 +197,28 @@
         <Button
             android:id="@+id/btnCustomEditPopup"
             android:layout_marginTop="10dp"
-            android:layout_marginBottom="200dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="自定义贴在输入法之上的弹窗"
             android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btnShowPosition1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="显示自由定位Position弹窗"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btnShowPosition2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="水平居中的自由定位Position弹窗"
+            android:layout_marginBottom="180dp"
+            android:textAllCaps="false" />
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 </android.support.v4.widget.NestedScrollView>

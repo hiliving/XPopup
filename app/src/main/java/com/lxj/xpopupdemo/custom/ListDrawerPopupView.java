@@ -6,14 +6,9 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import com.lxj.easyadapter.CommonAdapter;
-import com.lxj.easyadapter.MultiItemTypeAdapter;
+import com.lxj.easyadapter.EasyAdapter;
 import com.lxj.easyadapter.ViewHolder;
-import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.core.DrawerPopupView;
-import com.lxj.xpopup.enums.PopupPosition;
-import com.lxj.xpopup.interfaces.OnSelectListener;
-import com.lxj.xpopup.widget.PopupDrawerLayout;
 import com.lxj.xpopupdemo.R;
 
 import java.util.ArrayList;
@@ -42,7 +37,7 @@ public class ListDrawerPopupView extends DrawerPopupView {
             data.add(""+i);
         }
 
-        final CommonAdapter<String> commonAdapter = new CommonAdapter<String>(android.R.layout.simple_list_item_1, data) {
+        final EasyAdapter<String> commonAdapter = new EasyAdapter<String>(data, android.R.layout.simple_list_item_1) {
             @Override
             protected void bind(@NonNull ViewHolder holder, @NonNull String s, int position) {
                 holder.setText(android.R.id.text1, s);
